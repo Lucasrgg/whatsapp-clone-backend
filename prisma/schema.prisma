@@ -20,3 +20,5 @@ model User {
   fotoPerfil String?
   criadoEm  DateTime @default(now())
 }
+
+oi

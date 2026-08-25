@@ -1,9 +1,11 @@
+/// <reference path="./types/express.d.ts" />
 import "dotenv/config";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import express from "express";
 import { PrismaClient } from "./generated/prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { autenticar } from "./middlewares/autenticacao";
 
 const connectionUrl = new URL(process.env.DATABASE_URL!);
 
@@ -27,12 +29,12 @@ app.get("/", (req, res) => {
   res.send("Servidor rodando!");
 });
 
-app.get("/usuarios", async (req, res) => {
+app.get("/usuarios", autenticar, async (req, res) => {
   const usuarios = await prisma.user.findMany();
   res.json(usuarios);
 });
 
-app.post("/usuarios", async (req, res) => {
+app.post("/usuarios", autenticar, async (req, res) => {
   const { nome, email, senha } = req.body;
 
   const senhaCriptografada = await bcrypt.hash(senha, 10);

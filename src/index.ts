@@ -1,4 +1,5 @@
 import "dotenv/config";
+import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import express from "express";
 import { PrismaClient } from "./generated/prisma/client";
@@ -45,6 +46,30 @@ app.post("/usuarios", async (req, res) => {
   });
 
   res.status(201).json(novoUsuario);
+});
+
+app.post("/login", async (req, res) => {
+  const { email, senha } = req.body;
+
+  const usuario = await prisma.user.findUnique({ where: { email } });
+
+  if (!usuario) {
+    return res.status(401).json({ erro: "E-mail ou senha inválidos" });
+  }
+
+  const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
+
+  if (!senhaCorreta) {
+    return res.status(401).json({ erro: "E-mail ou senha inválidos" });
+  }
+
+  const token = jwt.sign(
+    { id: usuario.id, email: usuario.email },
+    process.env.JWT_SECRET as string,
+    { expiresIn: "1d" }
+  );
+
+  res.json({ token });
 });
 
 app.listen(PORT, () => {

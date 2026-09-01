@@ -77,3 +77,5 @@ app.post("/login", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
+
+console.log("Conectando ao banco de dados...");

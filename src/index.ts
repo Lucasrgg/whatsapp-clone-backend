@@ -133,5 +133,3 @@ app.get("/conversas/:id/mensagens", autenticar, async (req, res) => {
 
   res.json(mensagens);
 });
-
-console.log("Servidor rodando na porta", PORT);

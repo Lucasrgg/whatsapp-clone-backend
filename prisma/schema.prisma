@@ -13,10 +13,33 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  nome      String
-  email     String   @unique
-  senha     String
+  id         Int      @id @default(autoincrement())
+  nome       String
+  email      String   @unique
+  senha      String
   fotoPerfil String?
-  criadoEm  DateTime @default(now())
+  criadoEm   DateTime @default(now())
+
+  conversas         Conversa[] @relation("ParticipantesConversa")
+  mensagensEnviadas Mensagem[]
+}
+
+model Conversa {
+  id       Int      @id @default(autoincrement())
+  criadaEm DateTime @default(now())
+
+  participantes User[]     @relation("ParticipantesConversa")
+  mensagens     Mensagem[]
+}
+
+model Mensagem {
+  id          Int      @id @default(autoincrement())
+  conteudo    String
+  enviadaEm   DateTime @default(now())
+
+  conversaId  Int
+  conversa    Conversa @relation(fields: [conversaId], references: [id])
+
+  remetenteId Int
+  remetente   User     @relation(fields: [remetenteId], references: [id])
 }

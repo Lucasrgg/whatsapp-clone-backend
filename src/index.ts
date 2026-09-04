@@ -77,3 +77,59 @@ app.post("/login", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
+
+app.post("/conversas", autenticar, async (req, res) => {
+  const { participanteId } = req.body;
+  const meuId = req.usuarioId as number;
+
+  const novaConversa = await prisma.conversa.create({
+    data: {
+      participantes: {
+        connect: [{ id: meuId }, { id: participanteId }],
+      },
+    },
+    include: { participantes: true },
+  });
+
+  res.status(201).json(novaConversa);
+});
+
+app.get("/conversas", autenticar, async (req, res) => {
+  const meuId = req.usuarioId as number;
+
+  const conversas = await prisma.conversa.findMany({
+    where: {
+      participantes: { some: { id: meuId } },
+    },
+    include: { participantes: true },
+  });
+
+  res.json(conversas);
+});
+
+app.post("/mensagens", autenticar, async (req, res) => {
+  const { conversaId, conteudo } = req.body;
+  const meuId = req.usuarioId as number;
+
+  const novaMensagem = await prisma.mensagem.create({
+    data: {
+      conteudo,
+      conversaId,
+      remetenteId: meuId,
+    },
+  });
+
+  res.status(201).json(novaMensagem);
+});
+
+app.get("/conversas/:id/mensagens", autenticar, async (req, res) => {
+  const conversaId = Number(req.params.id);
+
+  const mensagens = await prisma.mensagem.findMany({
+    where: { conversaId },
+    orderBy: { enviadaEm: "asc" },
+    include: { remetente: true },
+  });
+
+  res.json(mensagens);
+});

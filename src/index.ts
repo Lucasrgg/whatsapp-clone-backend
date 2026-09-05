@@ -81,6 +81,31 @@ app.post("/login", async (req, res) => {
   res.json({ token });
 });
 
+io.on("connection", (socket) => {
+  console.log("Usuário conectado:", socket.id);
+
+  socket.on("entrarConversa", (conversaId) => {
+    socket.join(`conversa_${conversaId}`);
+    console.log(`Socket ${socket.id} entrou na conversa ${conversaId}`);
+  });
+
+  socket.on("enviarMensagem", async (dadosBrutos) => {
+  const dados = typeof dadosBrutos === "string" ? JSON.parse(dadosBrutos) : dadosBrutos;
+  const { conversaId, conteudo, remetenteId } = dados;
+
+  const novaMensagem = await prisma.mensagem.create({
+    data: { conteudo, conversaId, remetenteId },
+    include: { remetente: true },
+  });
+
+  io.to(`conversa_${conversaId}`).emit("novaMensagem", novaMensagem);
+});
+
+  socket.on("disconnect", () => {
+    console.log("Usuário desconectado:", socket.id);
+  });
+});
+
 httpServer.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });

@@ -8,6 +8,8 @@ import express from "express";
 import { PrismaClient } from "./generated/prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { autenticar } from "./middlewares/autenticacao";
+import multer from "multer";
+import path from "path";
 
 const connectionUrl = new URL(process.env.DATABASE_URL!);
 
@@ -28,7 +30,33 @@ const io = new Server(httpServer, {
   cors: { origin: "*" },
 });
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    const nomeUnico = `${Date.now()}-${file.originalname}`;
+    cb(null, nomeUnico);
+  },
+});
+
+const upload = multer({ storage });
+
+app.post("/usuarios/foto", autenticar, upload.single("foto"), async (req, res) => {
+  const meuId = req.usuarioId as number;
+  const caminhoArquivo = req.file?.filename;
+
+  const usuarioAtualizado = await prisma.user.update({
+    where: { id: meuId },
+    data: { fotoPerfil: caminhoArquivo },
+  });
+
+  res.json(usuarioAtualizado);
+});
+
 app.use(express.json());
+
+app.use("/uploads", express.static("uploads"));
 
 const PORT = 3000;
 

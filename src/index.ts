@@ -202,3 +202,27 @@ app.post("/logout", autenticar, async (req, res) => {
 
   res.json({ mensagem: "Logout realizado com sucesso" });
 });
+
+app.get("/usuarios/buscar", autenticar, async (req, res) => {
+  const { nome } = req.query;
+
+  const usuarios = await prisma.user.findMany({
+    where: {
+      nome: { contains: nome as string },
+    },
+    select: { id: true, nome: true, email: true, fotoPerfil: true },
+  });
+
+  res.json(usuarios);
+});
+
+app.post("/bloquear", autenticar, async (req, res) => {
+  const { usuarioId } = req.body;
+  const meuId = req.usuarioId as number;
+
+  const bloqueio = await prisma.bloqueio.create({
+    data: { bloqueadorId: meuId, bloqueadoId: usuarioId },
+  });
+
+  res.status(201).json(bloqueio);
+});

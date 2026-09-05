@@ -226,3 +226,22 @@ app.post("/bloquear", autenticar, async (req, res) => {
 
   res.status(201).json(bloqueio);
 });
+
+app.delete("/mensagens/:id", autenticar, async (req, res) => {
+  const mensagemId = Number(req.params.id);
+  const meuId = req.usuarioId as number;
+
+  const mensagem = await prisma.mensagem.findUnique({ where: { id: mensagemId } });
+
+  if (!mensagem) {
+    return res.status(404).json({ erro: "Mensagem não encontrada" });
+  }
+
+  if (mensagem.remetenteId !== meuId) {
+    return res.status(403).json({ erro: "Você não pode excluir essa mensagem" });
+  }
+
+  await prisma.mensagem.delete({ where: { id: mensagemId } });
+
+  res.status(204).send();
+});

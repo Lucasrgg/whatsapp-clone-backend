@@ -43,3 +43,10 @@ model Mensagem {
   remetenteId Int
   remetente   User     @relation(fields: [remetenteId], references: [id])
 }
+
+model TokenInvalido {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  invalidadoEm DateTime @default(now())
+}
+

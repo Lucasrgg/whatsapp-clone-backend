@@ -193,3 +193,12 @@ app.get("/conversas/:id/mensagens", autenticar, async (req, res) => {
 
   res.json(mensagens);
 });
+
+app.post("/logout", autenticar, async (req, res) => {
+  const authHeader = req.headers.authorization as string;
+  const [, token] = authHeader.split(" ");
+
+  await prisma.tokenInvalido.create({ data: { token } });
+
+  res.json({ mensagem: "Logout realizado com sucesso" });
+});

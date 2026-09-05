@@ -1,4 +1,6 @@
 /// <reference path="./types/express.d.ts" />
+import { createServer } from "http";
+import { Server } from "socket.io";
 import "dotenv/config";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
@@ -20,6 +22,11 @@ const adapter = new PrismaMariaDb({
 const prisma = new PrismaClient({ adapter });
 
 const app = express();
+
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: { origin: "*" },
+});
 
 app.use(express.json());
 
@@ -74,7 +81,7 @@ app.post("/login", async (req, res) => {
   res.json({ token });
 });
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
 

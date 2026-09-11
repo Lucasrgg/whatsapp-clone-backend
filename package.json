@@ -13,6 +13,7 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.2.0",
@@ -24,10 +25,17 @@
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "bcrypt": "^6.0.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "mariadb": "^3.5.3",
-    "multer": "^2.3.0"
+    "multer": "^2.3.0",
+    "socket.io": "^4.8.3"
+  },
+  "allowScripts": {
+    "@prisma/engines@7.9.1": true,
+    "bcrypt@6.0.0": true,
+    "prisma@7.9.1": true
   }
 }

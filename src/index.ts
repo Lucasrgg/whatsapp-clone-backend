@@ -134,9 +134,11 @@ io.on("connection", (socket) => {
   });
 });
 
-httpServer.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-});
+if (process.env.NODE_ENV !== "test") {
+  httpServer.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
+  });
+}
 
 app.post("/conversas", autenticar, async (req, res) => {
   const { participanteId } = req.body;
@@ -245,3 +247,5 @@ app.delete("/mensagens/:id", autenticar, async (req, res) => {
 
   res.status(204).send();
 });
+
+export default app;

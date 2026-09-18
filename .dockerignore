@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+.git
+.gitignore
+*.pem
+uploads
+src/generated
+npm-debug.log

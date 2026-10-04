@@ -48,7 +48,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-app.post("/usuarios/foto", autenticar, upload.single("foto"), async (req, res) => {
+app.post("/usuarios/foto", upload.single("foto"), async (req, res) => {
   const meuId = req.usuarioId as number;
   const caminhoArquivo = req.file?.filename;
 

@@ -21,6 +21,8 @@
     "@types/multer": "^2.2.0",
     "@types/node": "^26.2.0",
     "@types/supertest": "^7.2.1",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "jest": "^30.5.1",
     "jest-mock-extended": "^4.0.1",
     "prisma": "^7.9.1",
@@ -38,7 +40,9 @@
     "jsonwebtoken": "^9.0.3",
     "mariadb": "^3.5.3",
     "multer": "^2.3.0",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1"
   },
   "allowScripts": {
     "@prisma/engines@7.9.1": true,

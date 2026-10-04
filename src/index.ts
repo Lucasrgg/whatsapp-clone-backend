@@ -10,6 +10,10 @@ import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { autenticar } from "./middlewares/autenticacao";
 import multer from "multer";
 import path from "path";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./swagger";
+
+
 
 const connectionUrl = new URL(process.env.DATABASE_URL!);
 
@@ -24,6 +28,8 @@ const adapter = new PrismaMariaDb({
 const prisma = new PrismaClient({ adapter });
 
 const app = express();
+app.use(express.json());
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -64,12 +70,48 @@ app.get("/", (req, res) => {
   res.send("Servidor rodando!");
 });
 
+/**
+ * @swagger
+ * /usuarios:
+ *   get:
+ *     summary: Lista os usuários (requer autenticação)
+ *     tags: [Usuários]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de usuários
+ *       401:
+ *         description: Token ausente ou inválido
+ */
+
 app.get("/usuarios", autenticar, async (req, res) => {
   const usuarios = await prisma.user.findMany();
   res.json(usuarios);
 });
 
-app.post("/usuarios", autenticar, async (req, res) => {
+/**
+ * @swagger
+ * /usuarios:
+ *   post:
+ *     summary: Cadastra um novo usuário
+ *     tags: [Usuários]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome: { type: string }
+ *               email: { type: string }
+ *               senha: { type: string }
+ *     responses:
+ *       201:
+ *         description: Usuário criado
+ */
+
+app.post("/usuarios", async (req, res) => {
   const { nome, email, senha } = req.body;
 
   const senhaCriptografada = await bcrypt.hash(senha, 10);
@@ -84,6 +126,28 @@ app.post("/usuarios", autenticar, async (req, res) => {
 
   res.status(201).json(novoUsuario);
 });
+
+/**
+ * @swagger
+ * /login:
+ *   post:
+ *     summary: Faz login e retorna o token JWT
+ *     tags: [Autenticação]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email: { type: string }
+ *               senha: { type: string }
+ *     responses:
+ *       200:
+ *         description: Login realizado, retorna o token
+ *       401:
+ *         description: Credenciais inválidas
+ */
 
 app.post("/login", async (req, res) => {
   const { email, senha } = req.body;

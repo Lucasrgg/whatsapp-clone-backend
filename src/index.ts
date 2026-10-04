@@ -124,7 +124,11 @@ app.post("/usuarios", async (req, res) => {
     },
   });
 
-  res.status(201).json(novoUsuario);
+  res.status(201).json({
+    id: novoUsuario.id,
+    nome: novoUsuario.nome,
+    email: novoUsuario.email,
+  });
 });
 
 /**

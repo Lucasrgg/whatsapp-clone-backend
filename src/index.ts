@@ -193,7 +193,7 @@ io.on("connection", (socket) => {
 
   const novaMensagem = await prisma.mensagem.create({
     data: { conteudo, conversaId, remetenteId },
-    include: { remetente: true },
+    include: { remetente: { select: { id: true, nome: true, email: true, fotoPerfil: true } } },
   });
 
   io.to(`conversa_${conversaId}`).emit("novaMensagem", novaMensagem);
@@ -220,7 +220,7 @@ app.post("/conversas", autenticar, async (req, res) => {
         connect: [{ id: meuId }, { id: participanteId }],
       },
     },
-    include: { participantes: true },
+    include: { participantes: { select: { id: true, nome: true, email: true, fotoPerfil: true } } },
   });
 
   res.status(201).json(novaConversa);
@@ -233,7 +233,7 @@ app.get("/conversas", autenticar, async (req, res) => {
     where: {
       participantes: { some: { id: meuId } },
     },
-    include: { participantes: true },
+    include: { participantes: { select: { id: true, nome: true, email: true, fotoPerfil: true } } },
   });
 
   res.json(conversas);
@@ -260,7 +260,9 @@ app.get("/conversas/:id/mensagens", autenticar, async (req, res) => {
   const mensagens = await prisma.mensagem.findMany({
     where: { conversaId },
     orderBy: { enviadaEm: "asc" },
-    include: { remetente: true },
+    include: {
+      remetente: { select: { id: true, nome: true, email: true, fotoPerfil: true } },
+    },
   });
 
   res.json(mensagens);

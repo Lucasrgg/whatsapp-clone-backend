@@ -86,7 +86,9 @@ app.get("/", (req, res) => {
  */
 
 app.get("/usuarios", autenticar, async (req, res) => {
-  const usuarios = await prisma.user.findMany();
+  const usuarios = await prisma.user.findMany({
+    select: { id: true, nome: true, email: true, fotoPerfil: true },
+  });
   res.json(usuarios);
 });
 

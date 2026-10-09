@@ -9,4 +9,5 @@ module.exports = {
     ...tsJestTransformCfg,
   },
   setupFilesAfterEnv: ["<rootDir>/src/setup.ts"],
+  testPathIgnorePatterns: ["/node_modules/", "/dist/"],
 };

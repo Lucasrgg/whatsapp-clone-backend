@@ -7,7 +7,7 @@ import bcrypt from "bcrypt";
 import express from "express";
 import { PrismaClient } from "./generated/prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
-import { autenticar } from "./middlewares/autenticacao";
+import { autenticar, validarToken } from "./middlewares/autenticacao";
 import multer from "multer";
 import path from "path";
 import swaggerUi from "swagger-ui-express";
@@ -34,6 +34,19 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: "*" },
+});
+
+// Autenticação do Socket.IO: só aceita conexões com um JWT válido
+// (o cliente envia o token em auth: { token } ao conectar)
+io.use(async (socket, next) => {
+  const payload = await validarToken(socket.handshake.auth?.token);
+
+  if (!payload) {
+    return next(new Error("Token inválido ou ausente"));
+  }
+
+  socket.data.usuarioId = payload.id;
+  next();
 });
 
 const storage = multer.diskStorage({
@@ -216,24 +229,62 @@ app.post("/login", async (req, res) => {
 });
 
 io.on("connection", (socket) => {
-  console.log("Usuário conectado:", socket.id);
+  const usuarioId = socket.data.usuarioId as number;
+  console.log("Usuário conectado:", socket.id, "(id", usuarioId + ")");
 
-  socket.on("entrarConversa", (conversaId) => {
-    socket.join(`conversa_${conversaId}`);
-    console.log(`Socket ${socket.id} entrou na conversa ${conversaId}`);
+  socket.on("entrarConversa", async (conversaId) => {
+    try {
+      // Só deixa entrar na sala quem participa da conversa
+      const participa = await prisma.conversa.findFirst({
+        where: {
+          id: Number(conversaId),
+          participantes: { some: { id: usuarioId } },
+        },
+        select: { id: true },
+      });
+
+      if (!participa) {
+        socket.emit("erro", { erro: "Você não participa desta conversa" });
+        return;
+      }
+
+      socket.join(`conversa_${conversaId}`);
+      console.log(`Socket ${socket.id} entrou na conversa ${conversaId}`);
+    } catch (err) {
+      socket.emit("erro", { erro: "Não foi possível entrar na conversa" });
+    }
   });
 
   socket.on("enviarMensagem", async (dadosBrutos) => {
-  const dados = typeof dadosBrutos === "string" ? JSON.parse(dadosBrutos) : dadosBrutos;
-  const { conversaId, conteudo, remetenteId } = dados;
+    try {
+      const dados = typeof dadosBrutos === "string" ? JSON.parse(dadosBrutos) : dadosBrutos;
+      const { conversaId, conteudo } = dados;
 
-  const novaMensagem = await prisma.mensagem.create({
-    data: { conteudo, conversaId, remetenteId },
-    include: { remetente: { select: { id: true, nome: true, email: true, fotoPerfil: true } } },
+      // Só quem participa da conversa pode enviar mensagem nela
+      const participa = await prisma.conversa.findFirst({
+        where: {
+          id: Number(conversaId),
+          participantes: { some: { id: usuarioId } },
+        },
+        select: { id: true },
+      });
+
+      if (!participa) {
+        socket.emit("erro", { erro: "Você não participa desta conversa" });
+        return;
+      }
+
+      // O remetente vem do token (socket.data), nunca do cliente
+      const novaMensagem = await prisma.mensagem.create({
+        data: { conteudo, conversaId: Number(conversaId), remetenteId: usuarioId },
+        include: { remetente: { select: { id: true, nome: true, email: true, fotoPerfil: true } } },
+      });
+
+      io.to(`conversa_${conversaId}`).emit("novaMensagem", novaMensagem);
+    } catch (err) {
+      socket.emit("erro", { erro: "Não foi possível enviar a mensagem" });
+    }
   });
-
-  io.to(`conversa_${conversaId}`).emit("novaMensagem", novaMensagem);
-});
 
   socket.on("disconnect", () => {
     console.log("Usuário desconectado:", socket.id);

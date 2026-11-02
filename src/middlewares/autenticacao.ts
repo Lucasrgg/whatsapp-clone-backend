@@ -13,10 +13,22 @@ const adapter = new PrismaMariaDb({
 });
 const prisma = new PrismaClient({ adapter });
 
-
 interface TokenPayload {
   id: number;
   email: string;
+}
+
+export async function validarToken(token?: string): Promise<TokenPayload | null> {
+  if (!token) return null;
+
+  const tokenBanido = await prisma.tokenInvalido.findUnique({ where: { token } });
+  if (tokenBanido) return null;
+
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET as string) as TokenPayload;
+  } catch {
+    return null;
+  }
 }
 
 export async function autenticar(req: Request, res: Response, next: NextFunction) {
@@ -27,17 +39,12 @@ export async function autenticar(req: Request, res: Response, next: NextFunction
   }
 
   const [, token] = authHeader.split(" ");
+  const payload = await validarToken(token);
 
-  const tokenBanido = await prisma.tokenInvalido.findUnique({ where: { token } });
-  if (tokenBanido) {
+  if (!payload) {
     return res.status(401).json({ erro: "Token inválido ou expirado" });
   }
 
-  try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET as string) as TokenPayload;
-    req.usuarioId = payload.id;
-    next();
-  } catch (err) {
-    return res.status(401).json({ erro: "Token inválido ou expirado" });
-  }
+  req.usuarioId = payload.id;
+  next();
 }

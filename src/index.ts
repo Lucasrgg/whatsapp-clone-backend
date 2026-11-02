@@ -48,14 +48,40 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-app.post("/usuarios/foto", upload.single("foto"), async (req, res) => {
+/**
+ * @swagger
+ * /usuarios/foto:
+ *   post:
+ *     summary: Envia a foto de perfil do usuário logado
+ *     tags: [Usuários]
+ *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               foto:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200: { description: Foto atualizada }
+ *       401: { description: Token ausente ou inválido }
+ */
+app.post("/usuarios/foto", autenticar, upload.single("foto"), async (req, res) => {
   const meuId = req.usuarioId as number;
   const caminhoArquivo = req.file?.filename;
 
+if (!req.file) {
+  return res.status(400).json({ erro: "Envie uma imagem no campo 'foto'" });
+}
+
   const usuarioAtualizado = await prisma.user.update({
-    where: { id: meuId },
-    data: { fotoPerfil: caminhoArquivo },
-  });
+  where: { id: meuId },
+  data: { fotoPerfil: caminhoArquivo },
+  select: { id: true, nome: true, email: true, fotoPerfil: true },
+});
 
   res.json(usuarioAtualizado);
 });
@@ -155,6 +181,16 @@ app.post("/usuarios", async (req, res) => {
  *         description: Credenciais inválidas
  */
 
+/**
+ * @swagger
+ * /logout:
+ *   post:
+ *     summary: Encerra a sessão e invalida o token
+ *     tags: [Autenticação]
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200: { description: Logout realizado }
+ */
 app.post("/login", async (req, res) => {
   const { email, senha } = req.body;
 
@@ -210,6 +246,25 @@ if (process.env.NODE_ENV !== "test") {
   });
 }
 
+/**
+ * @swagger
+ * /conversas:
+ *   post:
+ *     summary: Cria uma conversa com outro usuário
+ *     tags: [Conversas]
+ *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               participanteId: { type: integer }
+ *     responses:
+ *       201: { description: Conversa criada }
+ *       401: { description: Token ausente ou inválido }
+ */
 app.post("/conversas", autenticar, async (req, res) => {
   const { participanteId } = req.body;
   const meuId = req.usuarioId as number;
@@ -226,6 +281,17 @@ app.post("/conversas", autenticar, async (req, res) => {
   res.status(201).json(novaConversa);
 });
 
+/**
+ * @swagger
+ * /conversas:
+ *   get:
+ *     summary: Lista as conversas do usuário logado
+ *     tags: [Conversas]
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200: { description: Lista de conversas }
+ *       401: { description: Token ausente ou inválido }
+ */
 app.get("/conversas", autenticar, async (req, res) => {
   const meuId = req.usuarioId as number;
 
@@ -239,6 +305,26 @@ app.get("/conversas", autenticar, async (req, res) => {
   res.json(conversas);
 });
 
+/**
+ * @swagger
+ * /mensagens:
+ *   post:
+ *     summary: Envia uma mensagem em uma conversa
+ *     tags: [Mensagens]
+ *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               conversaId: { type: integer }
+ *               conteudo: { type: string }
+ *     responses:
+ *       201: { description: Mensagem enviada }
+ *       401: { description: Token ausente ou inválido }
+ */
 app.post("/mensagens", autenticar, async (req, res) => {
   const { conversaId, conteudo } = req.body;
   const meuId = req.usuarioId as number;
@@ -254,6 +340,19 @@ app.post("/mensagens", autenticar, async (req, res) => {
   res.status(201).json(novaMensagem);
 });
 
+/**
+ * @swagger
+ * /conversas/{id}/mensagens:
+ *   get:
+ *     summary: Lista as mensagens de uma conversa
+ *     tags: [Mensagens]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: integer } }
+ *     responses:
+ *       200: { description: Lista de mensagens }
+ *       401: { description: Token ausente ou inválido }
+ */
 app.get("/conversas/:id/mensagens", autenticar, async (req, res) => {
   const conversaId = Number(req.params.id);
 
@@ -277,6 +376,18 @@ app.post("/logout", autenticar, async (req, res) => {
   res.json({ mensagem: "Logout realizado com sucesso" });
 });
 
+/**
+ * @swagger
+ * /usuarios/buscar:
+ *   get:
+ *     summary: Busca usuários pelo nome
+ *     tags: [Usuários]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - { in: query, name: nome, required: true, schema: { type: string } }
+ *     responses:
+ *       200: { description: Usuários encontrados }
+ */
 app.get("/usuarios/buscar", autenticar, async (req, res) => {
   const { nome } = req.query;
 
@@ -301,6 +412,20 @@ app.post("/bloquear", autenticar, async (req, res) => {
   res.status(201).json(bloqueio);
 });
 
+/**
+ * @swagger
+ * /mensagens/{id}:
+ *   delete:
+ *     summary: Exclui uma mensagem própria
+ *     tags: [Mensagens]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: integer } }
+ *     responses:
+ *       204: { description: Mensagem excluída }
+ *       403: { description: A mensagem é de outra pessoa }
+ *       404: { description: Mensagem não encontrada }
+ */
 app.delete("/mensagens/:id", autenticar, async (req, res) => {
   const mensagemId = Number(req.params.id);
   const meuId = req.usuarioId as number;

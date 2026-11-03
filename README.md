@@ -67,7 +67,7 @@ Express e Socket.IO compartilham o mesmo servidor HTTP. As rotas protegidas pass
 
 A lista completa, com exemplos de requisição e resposta, está no Swagger (`/api-docs`). Resumo:
 
-| Método | Rota | Descrição | Autenticação |
+| Método | Rota | Descrição | Exige token |
 | --- | --- | --- | :---: |
 | `POST` | `/usuarios` | Cadastra um usuário | ❌ |
 | `POST` | `/login` | Autentica e retorna o token JWT | ❌ |

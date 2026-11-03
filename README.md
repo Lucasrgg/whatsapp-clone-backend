@@ -184,7 +184,7 @@ São 12 testes em 6 suítes, cobrindo cadastro, login (incluindo casos de erro),
 **Lucas Garcia**
 
 - GitHub: [@Lucasrgg](https://github.com/Lucasrgg)
-- LinkedIn: _adicione o link do seu perfil_
+- LinkedIn: https://www.linkedin.com/in/lucas-rodrigues-garcia-dev/
 
 ---
 

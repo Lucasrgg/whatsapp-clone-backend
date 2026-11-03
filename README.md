@@ -170,10 +170,11 @@ São 12 testes em 6 suítes, cobrindo cadastro, login (incluindo casos de erro),
 - **Autorização na exclusão**: a API confere se quem pede a exclusão é o remetente da mensagem.
 - **Testes isolados do banco**: o Prisma mockado deixa a suíte rápida e evita qualquer risco de tocar em dados reais.
 - **Ambientes reproduzíveis**: Docker Compose sobe a API e o banco com um comando.
+- **Socket.IO autenticado**: a conexão exige um JWT válido (e fora da blacklist). O remetente das mensagens vem do token, nunca do cliente, e só participantes da conversa podem entrar na sala e enviar mensagens.
 
 ## 🗺️ Próximos passos
 
-- [ ] Validar o JWT no *handshake* do Socket.IO
+- [x] Validar o JWT no *handshake* do Socket.IO
 - [ ] HTTPS com domínio próprio
 - [ ] Limite de requisições (*rate limiting*) nas rotas de login e cadastro
 - [ ] Pipeline de CI para rodar os testes a cada push

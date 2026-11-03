@@ -4,3 +4,7 @@ dist/
 /src/generated/prisma
 uploads/
 *.pem
+.agents/
+.claude/
+.windsurf/
+skills-lock.json
